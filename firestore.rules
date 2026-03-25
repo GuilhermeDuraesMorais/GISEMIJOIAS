@@ -1,0 +1,118 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: inventory
+    // Document ID: product_id
+    // Fields:
+    //   - id: string (required) - unique code
+    //   - category: string (required) - e.g., Anéis, Brincos
+    //   - material: string (required) - Ouro, Prata, Ródio
+    //   - initialQuantity: number (required) - initial stock level
+    //   - currentQuantity: number (required) - current stock level
+    //   - unitValue: number (required) - unit price
+    //
+    // Collection: raw_inputs
+    // Fields:
+    //   - originalText: string (required) - raw text input
+    //   - status: string (required) - pending, processed, error
+    //   - uploadDate: string (required) - ISO 8601 date-time
+    //
+    // Collection: sales_history
+    // Fields:
+    //   - date: string (required) - ISO 8601 date-time
+    //   - productId: string (required) - code of the product sold
+    //   - category: string (required) - category of the product sold
+    //   - saleValue: number (required) - value of the sale
+    //
+    // Collection: monthly_archives
+    // Fields:
+    //   - referenceMonth: string (required) - e.g., 2026-03
+    //   - closingData: string (required) - JSON string of inventory state
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "guylleallstarsracing1@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll(['id', 'category', 'material', 'initialQuantity', 'currentQuantity', 'unitValue']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.category is string && data.category.size() > 0 &&
+             data.material is string && data.material.size() > 0 &&
+             data.initialQuantity is number && data.initialQuantity >= 0 &&
+             data.currentQuantity is number && data.currentQuantity >= 0 &&
+             data.unitValue is number && data.unitValue >= 0;
+    }
+
+    function isValidRawInput(data) {
+      return data.keys().hasAll(['originalText', 'status', 'uploadDate']) &&
+             data.originalText is string && data.originalText.size() > 0 &&
+             data.status in ['pending', 'processed', 'error'] &&
+             data.uploadDate is string;
+    }
+
+    function isValidSale(data) {
+      return data.keys().hasAll(['date', 'productId', 'category', 'saleValue']) &&
+             data.date is string &&
+             data.productId is string && data.productId.size() > 0 &&
+             data.category is string && data.category.size() > 0 &&
+             data.saleValue is number && data.saleValue >= 0;
+    }
+
+    function isValidArchive(data) {
+      return data.keys().hasAll(['referenceMonth', 'closingData']) &&
+             data.referenceMonth is string && data.referenceMonth.size() > 0 &&
+             data.closingData is string && data.closingData.size() > 0;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /inventory/{productId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidProduct(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /raw_inputs/{inputId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidRawInput(request.resource.data);
+      allow update: if isAuthenticated() && isValidRawInput(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /sales_history/{saleId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidSale(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /monthly_archives/{archiveId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidArchive(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

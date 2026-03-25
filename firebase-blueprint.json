@@ -1,0 +1,69 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Represents a semijoia item in the inventory.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique code for the product." },
+        "category": { "type": "string", "description": "Category of the item (e.g., Anéis, Brincos)." },
+        "material": { "type": "string", "description": "Material (Ouro, Prata, Ródio)." },
+        "initialQuantity": { "type": "number", "description": "Initial stock level." },
+        "currentQuantity": { "type": "number", "description": "Current stock level." },
+        "unitValue": { "type": "number", "description": "Unit price of the item." }
+      },
+      "required": ["id", "category", "material", "initialQuantity", "currentQuantity", "unitValue"]
+    },
+    "RawInput": {
+      "title": "RawInput",
+      "description": "Raw text input for AI processing.",
+      "type": "object",
+      "properties": {
+        "originalText": { "type": "string", "description": "The raw text pasted by the user." },
+        "status": { "type": "string", "enum": ["pending", "processed", "error"], "description": "Status of the AI processing." },
+        "uploadDate": { "type": "string", "format": "date-time", "description": "When the input was uploaded." }
+      },
+      "required": ["originalText", "status", "uploadDate"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "Records a sale transaction.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date-time", "description": "Date of the sale." },
+        "productId": { "type": "string", "description": "Code of the product sold." },
+        "category": { "type": "string", "description": "Category of the product sold." },
+        "saleValue": { "type": "number", "description": "Value of the sale." }
+      },
+      "required": ["date", "productId", "category", "saleValue"]
+    },
+    "MonthlyArchive": {
+      "title": "MonthlyArchive",
+      "description": "Monthly snapshots of inventory data.",
+      "type": "object",
+      "properties": {
+        "referenceMonth": { "type": "string", "description": "Month and year (e.g., 2026-03)." },
+        "closingData": { "type": "string", "description": "JSON string of the inventory state at closing." }
+      },
+      "required": ["referenceMonth", "closingData"]
+    }
+  },
+  "firestore": {
+    "/inventory": {
+      "schema": "Product",
+      "description": "Current inventory collection."
+    },
+    "/raw_inputs": {
+      "schema": "RawInput",
+      "description": "Collection for raw text inputs to be processed."
+    },
+    "/sales_history": {
+      "schema": "Sale",
+      "description": "Historical record of sales."
+    },
+    "/monthly_archives": {
+      "schema": "MonthlyArchive",
+      "description": "Monthly snapshots of inventory."
+    }
+  }
+}

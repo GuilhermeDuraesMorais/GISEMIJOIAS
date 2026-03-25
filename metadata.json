@@ -1,0 +1,5 @@
+{
+  "name": "GI Semijoias",
+  "description": "Controle de estoque inteligente para semijoias com processamento de dados via IA Gemini.",
+  "requestFramePermissions": []
+}
