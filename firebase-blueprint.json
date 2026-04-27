@@ -33,19 +33,24 @@
         "date": { "type": "string", "format": "date-time", "description": "Date of the sale." },
         "productId": { "type": "string", "description": "Code of the product sold." },
         "category": { "type": "string", "description": "Category of the product sold." },
-        "saleValue": { "type": "number", "description": "Value of the sale." }
+        "saleValue": { "type": "number", "description": "Value of the sale." },
+        "customerName": { "type": "string", "description": "Name of the buyer." },
+        "paymentMethod": { "type": "string", "enum": ["cash", "2x", "3x"], "description": "Method of payment." },
+        "installments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "number": { "type": "integer" },
+              "dueDate": { "type": "string" },
+              "value": { "type": "number" },
+              "status": { "type": "string", "enum": ["paid", "pending"] }
+            },
+            "required": ["number", "dueDate", "value", "status"]
+          }
+        }
       },
-      "required": ["date", "productId", "category", "saleValue"]
-    },
-    "MonthlyArchive": {
-      "title": "MonthlyArchive",
-      "description": "Monthly snapshots of inventory data.",
-      "type": "object",
-      "properties": {
-        "referenceMonth": { "type": "string", "description": "Month and year (e.g., 2026-03)." },
-        "closingData": { "type": "string", "description": "JSON string of the inventory state at closing." }
-      },
-      "required": ["referenceMonth", "closingData"]
+      "required": ["date", "productId", "category", "saleValue", "customerName", "paymentMethod", "installments"]
     }
   },
   "firestore": {
@@ -60,10 +65,6 @@
     "/sales_history": {
       "schema": "Sale",
       "description": "Historical record of sales."
-    },
-    "/monthly_archives": {
-      "schema": "MonthlyArchive",
-      "description": "Monthly snapshots of inventory."
     }
   }
 }

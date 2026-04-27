@@ -7,12 +7,22 @@ export interface Product {
   unitValue: number;
 }
 
+export interface Installment {
+  number: number;
+  dueDate: string;
+  value: number;
+  status: 'paid' | 'pending';
+}
+
 export interface Sale {
   id?: string;
   date: string;
   productId: string;
   category: string;
   saleValue: number;
+  customerName: string;
+  paymentMethod: 'cash' | '2x' | '3x';
+  installments: Installment[];
 }
 
 export interface RawInput {

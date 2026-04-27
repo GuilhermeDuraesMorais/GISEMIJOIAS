@@ -28,11 +28,6 @@ service cloud.firestore {
     //   - category: string (required) - category of the product sold
     //   - saleValue: number (required) - value of the sale
     //
-    // Collection: monthly_archives
-    // Fields:
-    //   - referenceMonth: string (required) - e.g., 2026-03
-    //   - closingData: string (required) - JSON string of inventory state
-    //
     // ===============================================================
 
     // ===============================================================
@@ -65,18 +60,24 @@ service cloud.firestore {
              data.uploadDate is string;
     }
 
+    function isValidInstallment(inst) {
+      return inst.keys().hasAll(['number', 'dueDate', 'value', 'status']) &&
+             inst.number is int &&
+             inst.dueDate is string &&
+             inst.value is number &&
+             inst.status in ['paid', 'pending'];
+    }
+
     function isValidSale(data) {
-      return data.keys().hasAll(['date', 'productId', 'category', 'saleValue']) &&
+      return data.keys().hasAll(['date', 'productId', 'category', 'saleValue', 'customerName', 'paymentMethod', 'installments']) &&
              data.date is string &&
              data.productId is string && data.productId.size() > 0 &&
              data.category is string && data.category.size() > 0 &&
-             data.saleValue is number && data.saleValue >= 0;
-    }
-
-    function isValidArchive(data) {
-      return data.keys().hasAll(['referenceMonth', 'closingData']) &&
-             data.referenceMonth is string && data.referenceMonth.size() > 0 &&
-             data.closingData is string && data.closingData.size() > 0;
+             data.saleValue is number && data.saleValue >= 0 &&
+             data.customerName is string && data.customerName.size() > 0 &&
+             data.paymentMethod in ['cash', '2x', '3x'] &&
+             data.installments is list &&
+             data.installments.size() <= 3;
     }
 
     // ===============================================================
@@ -104,13 +105,6 @@ service cloud.firestore {
     match /sales_history/{saleId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isValidSale(request.resource.data);
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
-    }
-
-    match /monthly_archives/{archiveId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidArchive(request.resource.data);
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
